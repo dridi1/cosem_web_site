@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, url_for, redirect, flash, jsonify
+from flask import Flask, render_template, url_for, redirect, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
@@ -146,5 +146,6 @@ def public_dashboard():
     return render_template('public_dashboard.html')
 
 if __name__ == '__main__':
-    db.create_all()  # Ensure the database is created before running the app
+    with app.app_context():
+        db.create_all()  # Ensure the database is created before running the app
     app.run()
