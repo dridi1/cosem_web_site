@@ -1,4 +1,5 @@
-from flask import Flask, render_template, url_for, redirect, flash
+import os
+from flask import Flask, render_template, url_for, redirect, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
@@ -6,11 +7,15 @@ from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextA
 from wtforms.validators import InputRequired, Length, ValidationError, EqualTo, Email
 from flask_bcrypt import Bcrypt
 
+# Create a writable directory for SQLite in /tmp
+instance_path = '/tmp/flask_instance'
+if not os.path.exists(instance_path):
+    os.makedirs(instance_path, exist_ok=True)
 
-app = Flask(__name__, template_folder="templates")
+app = Flask(__name__, template_folder="templates", instance_path=instance_path)
 app.config['SECRET_KEY'] = 'thisisasecretkey'
 bcrypt = Bcrypt(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(instance_path, "site.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -41,7 +46,6 @@ class ContactMessage(db.Model):
         self.subject = subject
         self.message = message
 
-
 class RegisterForm(FlaskForm):
     username = StringField(validators=[InputRequired(message="Username is required"), Length(min=3, max=20)], render_kw={"placeholder": "Username"})
     email = StringField('Email', validators=[
@@ -71,7 +75,7 @@ class LoginForm(FlaskForm):
 class ContactForm(FlaskForm):
     name = StringField('Name', validators=[InputRequired(), Length(min=2, max=50)])
     email = StringField('Email', validators=[InputRequired(), Email()])
-    subject = TextAreaField('subject', validators=[InputRequired(), Length(min=1)])
+    subject = TextAreaField('Subject', validators=[InputRequired(), Length(min=1)])
     message = TextAreaField('Message', validators=[InputRequired(), Length(min=1)])
     submit = SubmitField('Submit')
 
@@ -108,7 +112,7 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
-            login_user(user,remember=True)
+            login_user(user, remember=True)
             return redirect(url_for('private_dashboard'))
         else:
             error = 'Invalid username or password. Please try again.'
@@ -142,5 +146,5 @@ def public_dashboard():
     return render_template('public_dashboard.html')
 
 if __name__ == '__main__':
-    
-    app.run(host='0.0.0.0', debug=True)
+    db.create_all()  # Ensure the database is created before running the app
+    app.run()
