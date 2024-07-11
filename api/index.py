@@ -7,10 +7,7 @@ from wtforms import StringField, PasswordField, SubmitField, TextAreaField
 from wtforms.validators import InputRequired, Length, ValidationError, EqualTo, Email
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
-from dotenv import load_dotenv
-
-# Load environment variables from a .env file
-load_dotenv()
+import psycopg2
 
 app = Flask(__name__, template_folder="templates")
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'thisisasecretkey')
@@ -33,6 +30,28 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=False)
 
+# Function to create the user table if it doesn't exist
+def create_user_table():
+    conn = psycopg2.connect(database="db_name",
+                            host="db_host",
+                            user="db_user",
+                            password="db_pass",
+                            port="db_port")
+    cursor = conn.cursor()
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS "user" (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(80) UNIQUE NOT NULL,
+        email VARCHAR(120) UNIQUE NOT NULL,
+        password VARCHAR(120) NOT NULL
+    )
+    """)
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+# Create the user table before starting the app
+create_user_table()
 class ContactMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
