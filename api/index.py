@@ -76,6 +76,38 @@ class ContactMessage(db.Model):
         self.subject = subject
         self.message = message
 
+def create_contact_message_table():
+    db_uri = os.getenv('DATABASE_URL', 'postgresql://default:3zdkqlyXc9ZB@ep-spring-thunder-a44g23e4.us-east-1.aws.neon.tech:5432/verceldb?sslmode=require')
+    result = urlparse(db_uri)
+    username = result.username
+    password = result.password
+    database = result.path[1:]
+    hostname = result.hostname
+    port = result.port
+
+    conn = psycopg2.connect(database=database,
+                            host=hostname,
+                            user=username,
+                            password=password,
+                            port=port)
+    cursor = conn.cursor()
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS "contact_message" (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        email VARCHAR(100) NOT NULL,
+        subject VARCHAR(100) NOT NULL,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+# Create the contact_message table before starting the app
+create_contact_message_table()
+
 class RegisterForm(FlaskForm):
     username = StringField(validators=[InputRequired(message="Username is required"), Length(min=3, max=20)], render_kw={"placeholder": "Username"})
     email = StringField('Email', validators=[
