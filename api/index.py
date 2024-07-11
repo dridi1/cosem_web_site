@@ -7,6 +7,10 @@ from wtforms import StringField, PasswordField, SubmitField, TextAreaField
 from wtforms.validators import InputRequired, Length, ValidationError, EqualTo, Email
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
+from dotenv import load_dotenv
+
+# Load environment variables from a .env file
+load_dotenv()
 
 app = Flask(__name__, template_folder="templates")
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'thisisasecretkey')
@@ -145,4 +149,4 @@ def public_dashboard():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run()
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
