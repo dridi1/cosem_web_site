@@ -8,15 +8,12 @@ from wtforms.validators import InputRequired, Length, ValidationError, EqualTo, 
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 
-# Create a writable directory for SQLite in /tmp
-instance_path = '/tmp/flask_instance'
-if not os.path.exists(instance_path):
-    os.makedirs(instance_path, exist_ok=True)
 
-app = Flask(__name__, template_folder="templates", instance_path=instance_path)
-app.config['SECRET_KEY'] = 'thisisasecretkey'
+
+app = Flask(__name__, template_folder="templates")
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'thisisasecretkey')
 bcrypt = Bcrypt(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(instance_path, "site.db")}'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgres://default:3zdkqlyXc9ZB@ep-spring-thunder-a44g23e4.us-east-1.aws.neon.tech:5432/verceldb?sslmode=require')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
